@@ -1,28 +1,36 @@
-﻿namespace FormBuilder.Data.Entities.Forms
+﻿using System.Collections.Generic;
+using FormBuilder.Shared.Enums;
+
+namespace FormBuilder.Data.Entities.Forms
 {
     /// <summary>
-    /// The bridge table for the forms
+    /// Represents A field of a form
     /// </summary>
-    public class FormWithFields : BaseEntity
+    public class FormField : BaseEntity
     {
         /// <summary>
-        /// Foreign Key
+        /// The type of input
         /// </summary>
-        public string FormId { get; set; }
+        public FormInputType FormInputType { get; set; }
 
         /// <summary>
-        /// Navigation Property
+        /// The given name of the field
         /// </summary>
-        public Form Form { get; set; }
+        public string FieldName { get; set; }
 
         /// <summary>
-        /// Foreign Key
+        /// This property determines if this field has to use certain values and not just user input
         /// </summary>
-        public string FormFieldId { get; set; }
+        public bool UseValues { get; set; }
 
         /// <summary>
-        /// Navigation Property
+        /// If use values is true, this will contain the list of values seperated by commas
         /// </summary>
-        public FormField FormField { get; set; }
+        public string Values { get; set; }
+
+        /// <summary>
+        /// A list to the formWithFields that it belongs too
+        /// </summary>
+        public List<FormWithFields> FormWithFields { get; set; }
     }
 }
