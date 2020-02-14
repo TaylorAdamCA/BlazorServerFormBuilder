@@ -2,6 +2,7 @@
 A simple HTML form builder I built using ASP.NET Core Blazor, Entity Framework Core, and SQLServer. 
 It uses dependency injection via the IoC framework, as well it follows the Services/Repository/Unit Of Work patterns (Repository and UoW are implemented by EFCore).
 
+
  
 
 # Instructions
@@ -11,6 +12,8 @@ It uses dependency injection via the IoC framework, as well it follows the Servi
 4. Type "Add-Migration Initial" and hit enter
 5. Once that has finished type “Update-Database” and hit enter to build the database
 6. Run the solution using IIS Express 
+*  Initially, there won't be anything in the database, so I reccomend creating some form fields, then creating forms using those fields, then finally viewing/using the forms.
+
 
 # Plans for the future
 - Make the forms submit and save the data to the database
