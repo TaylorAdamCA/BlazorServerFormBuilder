@@ -27,7 +27,11 @@ namespace FormBuilder
             services.AddServerSideBlazor();
             services.AddTransient<IFormService, FormService>();
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("AppDbContext")));
+                //  Usually you would store this in your appsettings.json file and access iot via Configuration
+                //  See commented out section below
+                options.UseSqlServer(
+                    "Server = (localdb)\\mssqllocaldb; Database = BlazorFormBuilder; Trusted_Connection = True; MultipleActiveResultSets = true"));
+            // options.UseSqlServer(Configuration.GetConnectionString("AppDbContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
