@@ -1,0 +1,323 @@
+﻿@*
+    Harrison1 COSC 470 2019
+
+    File = ManageForms.razor
+
+    Author = TaylorAdam
+
+    Date = 2019-11-19
+
+    License = MIT
+
+    Modification History
+
+    Version		Author			Date				Desc
+    v 1.0		Taylor Adam		2019-11-19			Added Headers
+    v 1.1		Taylor Adam		2019-11-27          Fixed a bug that was causing the form fields to get added multiple times
+    v 1.2		Taylor Adam		2019-11-27          renamed to ManageForms
+    -->
+*@
+@page "/ManageForms"
+
+@using FormBuilder.Data.Entities.Forms
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using FormBuilder.Data.Interfaces
+@inject IFormService Service
+
+@if (FormsList == null) // TODO: Turn this whole page into a reusable CRUD component
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class='table table-hover'>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Modify</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var form in FormsList)
+            {
+                <tr>
+                    <td>@form.Name</td>
+                    <td>
+                        <i @onclick="@(e => RemoveForm(form.Id))" class="fas fa-trash-alt hover"></i> |
+                        <i @onclick="@(e => OpenUpdateForm(form.Id))" class="fas fa-edit hover"></i>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button @onclick="@OpenCreateForm" class="btn btn-info" style="float: right;">Create Form</button>
+
+    @if (_createModal)
+    {
+        @if (Items != null) // CreateForm form
+        {
+            <!--The modal TODO: Move to modal component, make it actually submit the form-->
+            <div class="modal" tabindex="-1" style="display: block" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Create Form</h3>
+                            <button type="button" class="close" @onclick="@ToggleCreateModal">
+                                <span aria-hidden="true">X</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="col-form-label">Form Name: </label>
+                                <input class="form-control" @bind="@Form.Name" type="text" />
+                                <label class="col-form-label">Brief Description of the form: </label>
+                                <input class="form-control" type="text" @bind="@Form.Description" />
+                                <br/>
+                                @if (SelectedFormFields.Count != 0)
+                                {
+                                    <label class="col-form-label">Additional Fields: </label>
+                                    <ul class="list-group-flush">
+                                        @foreach (var field in SelectedFormFields)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                @field.FieldName
+                                                <i @onclick="@(e => RemoveField(field.Id))" class="fas fa-trash-alt hover"></i>
+                                            </li>
+
+                                        }
+                                    </ul>
+                                }
+                                <div class="row">
+                                    <div class="col">
+                                        <select class="custom-select" @onchange="UpdateItem">
+                                            <option value="null"> -- Add additional fields --</option>
+                                            @foreach (var var in Items)
+                                            {
+                                                <option value=@var.Value>@var.Text</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-2">
+                                        <button @onclick="@AddField" class="btn btn-info" style="float: right;"><span class="oi oi-plus p-0"></span></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button @onclick="@CreateForm" class="btn btn-block btn-info">Create Form</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
+    @if (_updateModal)
+    {
+        <!--The modal TODO: Move to modal component, make it actually submit the form-->
+        <div class="modal" tabindex="-1" style="display: block" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Update Form</h3>
+                        <button type="button" class="close" @onclick="@ToggleUpdateModal">
+                            <span aria-hidden="true">X</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="col-form-label">Form Name: </label>
+                            <input class="form-control" @bind="@Form.Name" type="text" />
+                            <label class="col-form-label">Brief Description of the form: </label>
+                            <input class="form-control" type="text" @bind="@Form.Description" />
+                            @if (SelectedFormFields.Count != 0)
+                            {
+                                <label class="col-form-label">Additional Fields: </label>
+                                <ul class="list-group-flush">
+                                    @foreach (var field in SelectedFormFields)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            @field.FieldName
+                                            <i @onclick="@(e => RemoveField(field.Id))" class="fas fa-trash-alt hover"></i>
+                                        </li>
+
+                                    }
+                                </ul>
+                            }
+                            <div class="row">
+                                <div class="col">
+                                    <select class="custom-select" @onchange="UpdateItem">
+                                        <option value="null"> -- Add additional fields --</option>
+                                        @foreach (var var in Items)
+                                        {
+                                            <option value=@var.Value>@var.Text</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="col-2"><button @onclick="@AddField" class="btn btn-info" style="float: right;"><span class="oi oi-plus p-0"></span></button></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button @onclick="@UpdateForm" class="btn btn-block btn-info" style="float: right;">Update Form</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    public List<FormField> Fields;
+    public List<FormField> SelectedFormFields = new List<FormField>();
+    public List<SelectListItem>
+        Items
+    { get; set; } = null!;
+    public SelectListItem Item { get; set; } = null!;
+    public Form Form = null!;
+    /// <summary>
+    /// List of the forms
+    ///</summary>
+    public List<Form>
+        FormsList;
+
+    /// <summary>
+    /// the private backing field for showing the modal
+    ///</summary>
+    private bool _createModal = false;
+    /// <summary>
+    /// the private backing field for showing either the update or delete modal
+    ///                    </summary>
+    private bool _updateModal = false;
+
+    private string Name { get; set; }
+    private string Description { get; set; }
+
+    /// <summary>
+    /// Initializes the variables
+    ///</summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+
+        Items = Service.GetFormFieldsMultiSelectListAsync();
+        Fields = await Service.GetFormFieldsAsync();
+        FormsList = await Service.GetFormsAsync();
+
+    }
+
+    /// <summary>
+    /// Updates the Item variable to be the selected item from the select input
+    ///</summary>
+    /// <param name="e"></param>
+    protected void UpdateItem(ChangeEventArgs e)
+    {
+        Item = Items.FirstOrDefault(j => j.Value == e.Value.ToString());
+    }
+    /// <summary>
+    /// Removes the selected item from the list
+    ///</summary>
+    /// <param name="e"></param>
+    protected void RemoveField(string id)
+    {
+        if (id == null) return;
+        SelectedFormFields.Remove(Fields.Find(f => f.Id == id));
+        this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// Adds a field to the page
+    ///</summary>
+    protected void AddField()
+    {
+        var i = Items.FirstOrDefault(j => j.Value == Item.Value);
+        if (i == null) return;
+        SelectedFormFields.Add(Fields.Find(f => f.Id == i.Value));
+        this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// Inserts a new form into the db using form service
+    ///</summary>
+    /// <returns></returns>
+    protected async Task CreateForm()
+    {
+        await Service.CreateFormAsync(Name, Description, SelectedFormFields);
+        await OnInitializedAsync();
+        ToggleCreateModal();
+        ClearFields();
+        this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// Clears the fields
+    ///</summary>
+    protected void ClearFields()
+    {
+        Name = string.Empty;
+        Description = string.Empty;
+        SelectedFormFields = new List<FormField>
+            ();
+    }
+
+    /// <summary>
+    /// Creates a new form field and opens the modal
+    ///</summary>
+    protected void OpenCreateForm()
+    {
+        Form = new Form();
+        ToggleCreateModal();
+    }
+
+    protected async void RemoveForm(string id)
+    {
+        if (id == null) return;
+        FormsList.Remove(FormsList.Find(form => form.Id == id));
+        await Service.DeleteFormAsync(id);
+        ClearFields();
+        this.StateHasChanged();
+    }
+    protected async void UpdateForm()
+    {
+        ToggleUpdateModal();
+        await Service.UpdateFormAsync(Form, SelectedFormFields);
+
+        ClearFields();
+    }
+
+    protected void OpenUpdateForm(string id)
+    {
+        if (id == null) return;
+        Form = FormsList.Find(form => form.Id == id);
+        SelectedFormFields = new List<FormField>
+            ();
+        foreach (var formWithFields in Form.FormWithFields.ToList())
+        {
+            SelectedFormFields.Add(formWithFields.FormField);
+        }
+        ToggleUpdateModal();
+        this.StateHasChanged();
+    }
+    protected void CloseUpdateForm(string id)
+    {
+        ClearFields();
+        ToggleUpdateModal();
+        this.StateHasChanged();
+    }
+    /// <summary>
+    /// Toggles the modal on/off
+    ///</summary>
+    protected void ToggleCreateModal()
+    {
+        _createModal = !_createModal;
+
+    } /// <summary>
+      /// Toggles the modal on/off
+      ///</summary>
+    protected void ToggleUpdateModal()
+    {
+        _updateModal = !_updateModal;
+    }
+}

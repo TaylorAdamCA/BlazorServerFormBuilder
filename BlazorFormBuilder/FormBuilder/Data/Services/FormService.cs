@@ -133,11 +133,9 @@ namespace FormBuilder.Data.Services
         /// </summary>
         /// <param name="f"> the form to be updated </param>
         /// <returns></returns>
-        public async Task<Form> UpdateFormAsync(Form f)
+        public async Task<Form> UpdateFormAsync(Form form)
         {
-            var form = await _appDbContext.Forms.FindAsync(f.Id);
-            if (form == null)
-                return null;
+
             _appDbContext.Forms.Update(form);
             await _appDbContext.SaveChangesAsync();
 

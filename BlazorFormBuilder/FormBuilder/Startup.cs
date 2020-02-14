@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using FormBuilder.Data;
+using FormBuilder.Data.Interfaces;
+using FormBuilder.Data.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,6 +25,9 @@ namespace FormBuilder
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddTransient<IFormService, FormService>();
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("AppDbContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

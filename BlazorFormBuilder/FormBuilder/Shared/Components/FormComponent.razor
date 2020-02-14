@@ -1,0 +1,72 @@
+﻿@using FormBuilder.Data.Entities.Forms
+@using FormBuilder.Shared.Enums
+@using Microsoft.AspNetCore.Components
+
+<form>
+    @foreach (var formWithField in Form.FormWithFields)
+    {
+        var field = formWithField.FormField;
+        @if (field != null)
+        {
+            @*Checking if it's the hour type, there is probably a better way *@
+            @if (Enum.Parse<FormInputType>(field.FormInputType.ToString()) == Enum.Parse<FormInputType>("Hour"))
+            {
+                <div class="form-group">
+                    <label class="col-form-label" for="@field.FieldName">@field.FieldName</label>
+                    <input type="number" class="form-control mb-4" min="0" step="0.25" value="1.00" />
+                </div>
+            }
+            else
+            {
+                <div class="form-group" style="padding-top: 10px">
+                    <label class="col-form-label" for="@field.FieldName">@field.FieldName</label>
+                    <input class="form-control" type="@field.FormInputType" />
+                </div>
+            }
+        }
+    }
+
+    @*<button type="button" @onclick="@ToggleModal" class="btn btn-primary">Submit</button>*@
+</form>
+@if (_showModal)
+{
+    <!--The modal TODO: Move to modal component, make it actually submit the form-->
+    <div class="modal" tabindex="-1" style="display:block" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Success</h3>
+                    <button type="button" class="close" @onclick="@ToggleModal" data-dismiss="modal">
+                        <span aria-hidden="true">X</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="p-1">Your form has been submitted successfully</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-block btn-info" @onclick="@ToggleModal">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    /// <summary>
+    /// The form being displayed
+    /// </summary>
+    [Parameter]
+    public Form Form { get; set; }
+    /// <summary>
+    /// the private backing field for showing the modal
+    /// </summary>
+    private bool _showModal = false;
+
+    /// <summary>
+    /// Toggles the modal on/off
+    /// </summary>
+    protected void ToggleModal()
+    {
+        _showModal = !_showModal;
+    }
+
+}

@@ -1,0 +1,93 @@
+﻿@*
+    Harrison1 COSC 470 2019
+
+    File = Forms.razor
+
+    Author = TaylorAdam
+
+    Date = 2019-11-19
+
+    License = MIT
+
+    Modification History
+
+    Version		Author			Date				Desc
+    v 1.0		Taylor Adam		2019-11-19			Added Headers
+    -->
+*@
+
+@page "/"
+
+@using FormBuilder.Data.Entities.Forms
+@using FormBuilder.Data.Interfaces
+@using FormBuilder.Shared.Components
+@using Microsoft.AspNetCore.Components
+
+@inject IFormService Service
+
+<h1>Forms</h1>
+
+<p>Please select form from the list below</p>
+
+@if (FormsList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (FormsList.Count == 0)
+{
+    <p>No forms to display</p>
+}
+else
+{
+    <div class="row" style="padding-top:10px">
+        <div class="col-md-4">
+            <select @onchange="@Clicked" class="form-control">
+                <option value="">-- Select Form --</option>
+                @foreach (var form in FormsList)
+                {
+                    <option value="@form.Id">@form.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+    <br />
+    @if (Selected != null)
+    {
+        <FormComponent Form="Selected" />
+
+    }
+
+}
+
+@code {
+    /// <summary>
+    /// List of the forms
+    /// </summary>
+    public List<Form> FormsList;
+    /// <summary>
+    /// Currently selected form
+    /// </summary>
+    public Form Selected;
+
+    /// <summary>
+    /// Method invoked when the component is ready to start, having received its initial parameters from its parent in the render tree.
+    /// Gets the forms from the form services and assigns them to FormsList
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        FormsList = await Service.GetFormsAsync();
+    }
+    /// <summary>
+    /// Updates the state when the selected form changes
+    /// and assigns the form to FormSelected
+    /// </summary>
+    /// <param name="e"></param>
+    protected async void Clicked(ChangeEventArgs e)
+    {
+
+        Selected = await Service.GetFormAsync(e.Value.ToString());
+        this.StateHasChanged();
+    }
+
+}

@@ -1,0 +1,274 @@
+﻿@page "/ManageFormFields"
+
+@using FormBuilder.Data.Entities.Forms
+@using FormBuilder.Data.Interfaces
+@using FormBuilder.Shared.Enums
+@inject IFormService Service
+
+@if (FieldsList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class='table table-hover'>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Input</th>
+                <th>Modify</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var field in FieldsList)
+            {
+                <tr>
+                    <td>@field.FieldName</td>
+                    <td>@field.FormInputType</td>
+                    <td>
+                        <i @onclick="@(e => RemoveFormField(field.Id))" class="fas fa-trash-alt hover"></i> |
+                        <i @onclick="@(e => OpenUpdateFormField(field.Id))" class="fas fa-edit hover"></i>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button @onclick="@OpenCreateField" class="btn btn-info" style="float: right;">Create Field</button>
+    @if (_createModal)
+    {
+        <!--The modal TODO: Move to modal component, make it actually submit the form-->
+        <div class="modal" tabindex="-1" style="display:block" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Create Form Field</h3>
+                        <button type="button" class="close" @onclick="@ToggleCreateModal">
+                            <span aria-hidden="true">X</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input class="form-control" @bind="@Field.FieldName" type="text" placeholder="Field Name" />
+
+                            <select @onchange="@InputTypeClicked" class="form-control">
+                                <option value="">-- Input Type --</option>
+                                @foreach (var type in (FormInputType[])Enum.GetValues(typeof(FormInputType)))
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+
+                            @*<label class="form-check-label">Does this field require only set values </label>
+                                <input class="form-check-input" type="checkbox" @onclick="@ToggleValuesBox" />
+
+                                @if (_showValuesBox)
+                                {
+                                    <label class="col-form-label">Comma separated list of possible values: </label>
+                                    <input class="form-control" type="text" @bind="@FormField.Values" />
+                                }*@
+                            <input class="form-control" type="text" @bind="@Field.Description" placeholder="Description" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-block btn-info" @onclick="@InsertField">Create Form Field</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    @if (_updateModal)
+    {
+
+        <div class="modal" tabindex="-1" style="display:block" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Update Form Field </h3>
+                        <button type="button" class="close" @onclick="@ToggleUpdateModal">
+                            <span aria-hidden="true">X</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input class="form-control" @bind="@Field.FieldName" type="text" placeholder="Field Name" />
+                            <select @onchange="@InputTypeClicked" class="form-control">
+                                <option value="@InputType">@InputType</option>
+                                @foreach (var type in (FormInputType[])Enum.GetValues(typeof(FormInputType)))
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                            @*<label class="form-check-label">Does this field require only set values </label>
+                                @if (FormField.UseValues)
+                                {
+                                    <input class="form-check-input" type="checkbox" @onclick="@ToggleValuesBoxClearValues" checked />
+                                }
+                                else
+                                {
+                                    <input class="form-check-input" type="checkbox" @onclick="@ToggleValuesBoxClearValues" />
+                                }*@
+
+                            @if (_showValuesBox)
+                            {
+                                <label class="col-form-label">Comma separated list of possible values: </label>
+                                <input class="form-control" type="text" @bind="@Field.Values" />
+                            }
+                            <input class="form-control" type="text" @bind="@Field.Description" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-block btn-info" @onclick="@UpdateFormField">Update Form Field</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@functions {
+    /// <summary>
+    /// The list of form fields
+    /// </summary>
+    public List<FormField> FieldsList;
+    public FormField Field = null;
+    public FormInputType InputType = FormInputType.Text;
+    /// <summary>
+    /// the private backing field for showing the modal to create a form field
+    /// </summary>
+    private bool _createModal = false;
+    /// <summary>
+    /// the private backing field for showing the modal to update a form field
+    /// </summary>
+    private bool _updateModal = false;
+
+    /// <summary>
+    /// the backing field for showing values box
+    /// </summary>
+    private bool _showValuesBox = false;
+
+    /// <summary>
+    /// Method invoked when the component is ready to start, having received its initial parameters from its parent in the render tree.
+    /// Gets the forms from the form services and assigns them to FormsList
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+
+    {
+        FieldsList = await Service.GetFormFieldsAsync();
+    }
+    /// <summary>
+    /// Toggles the modal on/off
+    /// </summary>
+    protected void ToggleCreateModal()
+    {
+        _createModal = !_createModal;
+
+    }/// <summary>
+     /// Toggles the modal on/off
+     /// </summary>
+    protected void ToggleUpdateModal()
+    {
+        _updateModal = !_updateModal;
+    }
+
+    /// <summary>
+    /// Creates a new form field and opens the modal
+    /// </summary>
+    protected void OpenCreateField()
+    {
+        Field = new FormField();
+        ToggleCreateModal();
+
+    }
+
+    protected void ToggleValuesBoxClearValues()
+    {
+        if (!_showValuesBox && Field.UseValues)
+        {
+            Field.UseValues = false;
+            Field.Values = null;
+        }
+        else
+        {
+            _showValuesBox = !_showValuesBox;
+        }
+    }
+
+    protected void ToggleValuesBox()
+    {
+        _showValuesBox = !_showValuesBox;
+    }
+    /// <summary>
+    /// Opens the modal to update the form field
+    /// </summary>
+    protected async void OpenUpdateFormField(string id)
+    {
+        Field = await Service.GetFormFieldAsync(id);
+        if (Field.UseValues)
+            _showValuesBox = true;
+        else
+            _showValuesBox = false;
+
+        ToggleUpdateModal();
+        this.StateHasChanged();
+    }
+
+    protected void UpdateFormField()
+    {
+        if (_showValuesBox)
+        {
+            Field.UseValues = true;
+            ToggleValuesBox();
+        }
+        else
+        {
+            Field.UseValues = false;
+            Field.Values = null;
+        }
+
+        ToggleUpdateModal();
+
+        Field.FormInputType = InputType;
+        Service.UpdateFormFieldAsync(Field);
+    }
+
+    /// <summary>
+    /// Inserts the created form field into the database
+    /// </summary>
+    protected async void InsertField()
+    {
+        if (Field.Values != null)
+            Field.UseValues = true;
+
+        if (_showValuesBox)
+            ToggleValuesBox();
+
+        Field.FormInputType = InputType;
+        await Service.InsertFormFieldAsync(Field);
+        FieldsList.Add(Field);
+        ToggleCreateModal();
+
+        this.StateHasChanged();
+    }
+
+    protected async void RemoveFormField(string id)
+    {
+
+        if (id == null) return;
+        await Service.DeleteFormFieldAsync(id);
+        FieldsList.Remove(FieldsList.Find(formField => formField.Id == id));
+        this.StateHasChanged();
+    }
+    /// <summary>
+    /// Updates the state when the selected form changes
+    /// and assigns the form to FormSelected
+    /// </summary>
+    /// <param name="e"></param>
+    protected void InputTypeClicked(ChangeEventArgs e)
+    {
+
+        InputType = Enum.Parse<FormInputType>(e.Value.ToString());
+        this.StateHasChanged();
+    }
+
+}
